@@ -1,0 +1,14 @@
+server:
+  port: 8083
+
+spring:
+  graphql:
+    path: /graphql
+    schema:
+      locations: classpath:/ # Vai procurar por schema.graphqls aqui
+
+# Segurança por perfis (autenticação desnecessária conforme combinado)
+spring.security:
+  user:
+    name: ignore
+    password: ignore

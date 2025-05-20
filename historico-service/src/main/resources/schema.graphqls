@@ -1,0 +1,11 @@
+type Consulta {
+  id: ID
+  pacienteId: Long
+  medicoId: Long
+  dataHora: String
+  observacoes: String
+}
+
+type Query {
+  listarConsultas: [Consulta]
+}

@@ -1,0 +1,16 @@
+server:
+  port: 8082
+
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+application:
+  rabbit:
+    exchange: consultas-exchange
+    routing:
+      criada: consulta.criada
+      editada: consulta.editada
