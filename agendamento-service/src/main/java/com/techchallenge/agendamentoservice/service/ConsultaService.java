@@ -64,15 +64,26 @@ public class ConsultaService {
     public List<Consulta> listarConsultas() {
         return consultaRepository.findAll();
     }
-    public Consulta criarConsultaComDTO(ConsultaRequestDTO dto) {
-    Consulta nova = Consulta.builder()
-            .pacienteId(dto.pacienteId())
-            .medicoId(dto.medicoId())
-            .dataHora(dto.dataHora())
-            .observacoes(dto.observacoes())
-            .build();
-    return criarConsulta(nova); // reutiliza o método que envia para o Rabbit
+public Consulta criarConsultaComDTO(ConsultaRequestDTO dto) {
+    Consulta consulta = Consulta.builder()
+        .pacienteId(dto.pacienteId())
+        .medicoId(dto.medicoId())
+        .dataHora(dto.dataHora())
+        .observacoes(dto.observacoes())
+        .build();
+
+    Consulta consultaSalva = consultaRepository.save(consulta);
+
+    try {
+        String json = objectMapper.writeValueAsString(consultaSalva);
+        rabbitTemplate.convertAndSend("consulta.exchange", "consulta.created", json);
+    } catch (JsonProcessingException e) {
+        throw new RuntimeException("Erro ao serializar consulta para JSON", e);
+    }
+
+    return consultaSalva;
 }
+
 public Consulta editarConsultaComDTO(Long id, ConsultaUpdateDTO dto) {
     Consulta consulta = consultaRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Consulta não encontrada"));

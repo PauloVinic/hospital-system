@@ -20,7 +20,6 @@ public class ConsultaController {
     private final ConsultaService service;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('MEDICO', 'ENFERMEIRO')")
     public ResponseEntity<ConsultaResponseDTO> criar(@Valid @RequestBody ConsultaRequestDTO dto) {
         Consulta nova = service.criarConsultaComDTO(dto);
         return ResponseEntity.status(201).body(new ConsultaResponseDTO(
@@ -33,7 +32,6 @@ public class ConsultaController {
     }
 
 @PutMapping("/{id}")
-@PreAuthorize("hasAnyRole('MEDICO', 'ENFERMEIRO')")
 public ResponseEntity<Consulta> editar(@PathVariable Long id, @Valid @RequestBody ConsultaUpdateDTO dto) {
     return ResponseEntity.ok(service.editarConsultaComDTO(id, dto));
 }
