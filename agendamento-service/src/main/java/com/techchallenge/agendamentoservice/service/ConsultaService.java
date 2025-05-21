@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.techchallenge.agendamentoservice.domain.Consulta;
 import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
+import com.techchallenge.agendamentoservice.dto.ConsultaUpdateDTO;
 import com.techchallenge.agendamentoservice.repository.ConsultaRepository;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
@@ -71,5 +72,14 @@ public class ConsultaService {
             .observacoes(dto.observacoes())
             .build();
     return criarConsulta(nova); // reutiliza o método que envia para o Rabbit
+}
+public Consulta editarConsultaComDTO(Long id, ConsultaUpdateDTO dto) {
+    Consulta consulta = consultaRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Consulta não encontrada"));
+
+    consulta.setDataHora(dto.dataHora());
+    consulta.setObservacoes(dto.observacoes());
+
+    return consultaRepository.save(consulta);
 }
 }
