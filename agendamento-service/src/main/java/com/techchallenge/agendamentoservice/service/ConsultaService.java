@@ -65,6 +65,19 @@ public class ConsultaService {
         return consultaRepository.findAll();
     }
 public Consulta criarConsultaComDTO(ConsultaRequestDTO dto) {
+    // Verificar conflito de horário
+    if (consultaRepository.existsByMedicoIdAndDataHora(dto.medicoId(), dto.dataHora())) {
+        throw new RuntimeException("Já existe uma consulta marcada para este médico neste horário.");
+    }
+
+    // Verificar se o médico e o paciente existem (simulado por enquanto)
+    if (dto.medicoId() <= 0) {
+        throw new RuntimeException("Médico não encontrado.");
+    }
+    if (dto.pacienteId() <= 0) {
+        throw new RuntimeException("Paciente não encontrado.");
+    }
+
     Consulta consulta = Consulta.builder()
         .pacienteId(dto.pacienteId())
         .medicoId(dto.medicoId())
