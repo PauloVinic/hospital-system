@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
 import com.techchallenge.agendamentoservice.repository.ConsultaRepository;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
@@ -62,4 +63,13 @@ public class ConsultaService {
     public List<Consulta> listarConsultas() {
         return consultaRepository.findAll();
     }
+    public Consulta criarConsultaComDTO(ConsultaRequestDTO dto) {
+    Consulta nova = Consulta.builder()
+            .pacienteId(dto.pacienteId())
+            .medicoId(dto.medicoId())
+            .dataHora(dto.dataHora())
+            .observacoes(dto.observacoes())
+            .build();
+    return criarConsulta(nova); // reutiliza o método que envia para o Rabbit
+}
 }
