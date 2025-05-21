@@ -8,8 +8,10 @@ import com.techchallenge.agendamentoservice.service.ConsultaService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,22 +25,20 @@ public class ConsultaController {
     public ResponseEntity<ConsultaResponseDTO> criar(@Valid @RequestBody ConsultaRequestDTO dto) {
         Consulta nova = service.criarConsultaComDTO(dto);
         return ResponseEntity.status(201).body(new ConsultaResponseDTO(
-            nova.getId(),
-            nova.getPacienteId(),
-            nova.getMedicoId(),
-            nova.getDataHora(),
-            nova.getObservacoes()
-        ));
+                nova.getId(),
+                nova.getPacienteId(),
+                nova.getMedicoId(),
+                nova.getDataHora(),
+                nova.getObservacoes()));
     }
 
-@PutMapping("/{id}")
-public ResponseEntity<Consulta> editar(@PathVariable Long id, @Valid @RequestBody ConsultaUpdateDTO dto) {
-    return ResponseEntity.ok(service.editarConsultaComDTO(id, dto));
-}
+    @PutMapping("/{id}")
+    public ResponseEntity<Consulta> editar(@PathVariable Long id, @Valid @RequestBody ConsultaUpdateDTO dto) {
+        return ResponseEntity.ok(service.editarConsultaComDTO(id, dto));
+    }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'ENFERMEIRO')")
-    public ResponseEntity<?> listar() {
-        return ResponseEntity.ok(service.listarConsultas());
+    public ResponseEntity<Page<Consulta>> listar(Pageable pageable) {
+        return ResponseEntity.ok(service.listarConsultasPaginadas(pageable));
     }
 }
