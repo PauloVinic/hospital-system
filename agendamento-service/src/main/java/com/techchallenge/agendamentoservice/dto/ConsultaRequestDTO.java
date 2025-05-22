@@ -18,5 +18,6 @@ public record ConsultaRequestDTO(
     LocalDateTime dataHora,
 
     String observacoes
+    
 
 ) {}

@@ -1,6 +1,7 @@
 package com.techchallenge.agendamentoservice.controller;
 
 import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.dto.ConsultaPageResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaUpdateDTO;
@@ -11,8 +12,10 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/consultas")
@@ -38,7 +41,11 @@ public class ConsultaController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Consulta>> listar(Pageable pageable) {
-        return ResponseEntity.ok(service.listarConsultasPaginadas(pageable));
+    public ResponseEntity<ConsultaPageResponseDTO> listarConsultas(
+            @PageableDefault(sort = { "dataHora", "id" }, direction = Sort.Direction.ASC) Pageable pageable) {
+
+        var page = service.listarConsultas(pageable);
+        return ResponseEntity.ok(page); // ✅ já é um ConsultaPageResponseDTO
     }
+
 }

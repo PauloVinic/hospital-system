@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.dto.ConsultaPageResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
+import com.techchallenge.agendamentoservice.dto.ConsultaResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaUpdateDTO;
 import com.techchallenge.agendamentoservice.repository.ConsultaRepository;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -67,17 +69,16 @@ public class ConsultaService {
     }
 
     public Consulta criarConsultaComDTO(ConsultaRequestDTO dto) {
-        // Verificar conflito de horário
-        if (consultaRepository.existsByMedicoIdAndDataHora(dto.medicoId(), dto.dataHora())) {
-            throw new RuntimeException("Já existe uma consulta marcada para este médico neste horário.");
-        }
-
-        // Verificar se o médico e o paciente existem (simulado por enquanto)
-        if (dto.medicoId() <= 0) {
+        if (!medicoExiste(dto.medicoId())) {
             throw new RuntimeException("Médico não encontrado.");
         }
-        if (dto.pacienteId() <= 0) {
+
+        if (!pacienteExiste(dto.pacienteId())) {
             throw new RuntimeException("Paciente não encontrado.");
+        }
+
+        if (consultaRepository.existsByMedicoIdAndDataHora(dto.medicoId(), dto.dataHora())) {
+            throw new RuntimeException("Já existe uma consulta marcada para este médico neste horário.");
         }
 
         Consulta consulta = Consulta.builder()
@@ -109,7 +110,27 @@ public class ConsultaService {
         return consultaRepository.save(consulta);
     }
 
-    public Page<Consulta> listarConsultasPaginadas(Pageable pageable) {
-        return consultaRepository.findAll(pageable);
+    public ConsultaPageResponseDTO listarConsultas(Pageable pageable) {
+        Page<Consulta> page = consultaRepository.findAllValid(pageable);
+
+        List<ConsultaResponseDTO> dtos = page.getContent()
+                .stream()
+                .map(ConsultaResponseDTO::new)
+                .toList();
+
+        return new ConsultaPageResponseDTO(
+                dtos,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements());
     }
+
+    private boolean medicoExiste(Long id) {
+        return List.of(1L, 2L, 3L).contains(id);
+    }
+
+    private boolean pacienteExiste(Long id) {
+        return List.of(1L, 2L, 3L).contains(id);
+    }
+
 }
