@@ -1,5 +1,12 @@
 package com.techchallenge.agendamentoservice.service;
 
+import java.util.List;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -10,12 +17,8 @@ import com.techchallenge.agendamentoservice.dto.ConsultaResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaUpdateDTO;
 import com.techchallenge.agendamentoservice.exception.BusinessException;
 import com.techchallenge.agendamentoservice.repository.ConsultaRepository;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
+import com.techchallenge.agendamentoservice.repository.MedicoRepository;
+import com.techchallenge.agendamentoservice.repository.PacienteRepository;
 
 @Service
 public class ConsultaService {
@@ -23,10 +26,17 @@ public class ConsultaService {
     private final ConsultaRepository consultaRepository;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
+    private final MedicoRepository medicoRepository;
+    private final PacienteRepository pacienteRepository;
 
-    public ConsultaService(ConsultaRepository consultaRepository, RabbitTemplate rabbitTemplate) {
+    public ConsultaService(ConsultaRepository consultaRepository,
+            RabbitTemplate rabbitTemplate,
+            MedicoRepository medicoRepository,
+            PacienteRepository pacienteRepository) {
         this.consultaRepository = consultaRepository;
         this.rabbitTemplate = rabbitTemplate;
+        this.medicoRepository = medicoRepository;
+        this.pacienteRepository = pacienteRepository;
         this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
@@ -55,18 +65,22 @@ public class ConsultaService {
     }
 
     public Consulta criarConsultaComDTO(ConsultaRequestDTO dto) {
-        if (!medicoExiste(dto.medicoId())) {
+        // Valida se o médico existe
+        if (!medicoRepository.existsById(dto.medicoId())) {
             throw new BusinessException("Médico ID " + dto.medicoId() + " não encontrado");
         }
 
-        if (!pacienteExiste(dto.pacienteId())) {
+        // Valida se o paciente existe
+        if (!pacienteRepository.existsById(dto.pacienteId())) {
             throw new BusinessException("Paciente ID " + dto.pacienteId() + " não encontrado");
         }
 
+        // Verifica se já existe uma consulta nesse horário com o mesmo médico
         if (consultaRepository.existsByMedicoIdAndDataHora(dto.medicoId(), dto.dataHora())) {
             throw new BusinessException("Médico já possui consulta agendada neste horário");
         }
 
+        // Cria e salva a consulta
         Consulta consulta = Consulta.builder()
                 .pacienteId(dto.pacienteId())
                 .medicoId(dto.medicoId())
@@ -75,7 +89,10 @@ public class ConsultaService {
                 .build();
 
         Consulta consultaSalva = consultaRepository.save(consulta);
+
+        // Envia evento via RabbitMQ
         enviarEvento("consulta.created", consultaSalva);
+
         return consultaSalva;
     }
 
@@ -120,4 +137,5 @@ public class ConsultaService {
     private boolean pacienteExiste(Long id) {
         return List.of(1L, 2L, 3L).contains(id);
     }
+
 }
