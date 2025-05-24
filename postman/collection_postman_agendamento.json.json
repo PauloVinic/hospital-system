@@ -1,0 +1,53 @@
+{
+    "info": {
+        "name": "Hospital System - Agendamento (Atualizada)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Criar Consulta",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"medicoId\": 1,\n    \"pacienteId\": 1,\n    \"dataHora\": \"2025-05-25T10:00:00\",\n    \"observacoes\": \"Consulta de rotina\"\n}"
+                },
+                "url": {
+                    "raw": "http://localhost:8081/consultas",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8081",
+                    "path": [
+                        "consultas"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Listar Consultas",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:8081/consultas",
+                    "protocol": "http",
+                    "host": [
+                        "localhost"
+                    ],
+                    "port": "8081",
+                    "path": [
+                        "consultas"
+                    ]
+                }
+            }
+        }
+    ]
+}
