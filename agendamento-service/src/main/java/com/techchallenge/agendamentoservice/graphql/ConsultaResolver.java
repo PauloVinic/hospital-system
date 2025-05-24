@@ -1,14 +1,16 @@
 package com.techchallenge.agendamentoservice.graphql;
 
-import com.techchallenge.agendamentoservice.domain.Consulta;
-import com.techchallenge.agendamentoservice.service.ConsultaService;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
+import com.techchallenge.agendamentoservice.service.ConsultaService;
 
 @Controller
 public class ConsultaResolver {
@@ -26,14 +28,13 @@ public class ConsultaResolver {
 
     @MutationMapping
     public Consulta criarConsulta(@Argument("input") ConsultaInput input) {
-        Consulta nova = Consulta.builder()
-                .pacienteId(input.pacienteId())
-                .medicoId(input.medicoId())
-                .dataHora(LocalDateTime.parse(input.dataHora()))
-                .observacoes(input.observacoes())
-                .build();
+        ConsultaRequestDTO dto = new ConsultaRequestDTO(
+                input.pacienteId(),
+                input.medicoId(),
+                LocalDateTime.parse(input.dataHora()),
+                input.observacoes()
+        );
 
-        return service.criarConsulta(nova);
+        return service.criarConsultaComDTO(dto);
     }
-    
 }

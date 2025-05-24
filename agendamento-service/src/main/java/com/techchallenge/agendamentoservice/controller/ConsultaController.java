@@ -33,14 +33,11 @@ public class ConsultaController {
 
     private final ConsultaService service;
 
-    @Operation(
-        summary = "Criar uma nova consulta médica",
-        description = "Cria uma nova consulta entre médico e paciente, com validações de disponibilidade e existência."
-    )
+    @Operation(summary = "Criar uma nova consulta médica", description = "Cria uma nova consulta entre médico e paciente, com validações de disponibilidade e existência.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Consulta criada com sucesso"),
-        @ApiResponse(responseCode = "400", description = "Erro de validação ou conflito de horário"),
-        @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            @ApiResponse(responseCode = "201", description = "Consulta criada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Erro de validação ou conflito de horário"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @PostMapping
     public ResponseEntity<ConsultaResponseDTO> criar(@Valid @RequestBody ConsultaRequestDTO dto) {
@@ -53,28 +50,24 @@ public class ConsultaController {
                 nova.getObservacoes()));
     }
 
-    @Operation(
-        summary = "Atualizar uma consulta existente",
-        description = "Atualiza data e observações de uma consulta pelo ID"
-    )
+    @Operation(summary = "Atualizar uma consulta existente", description = "Atualiza data e observações de uma consulta pelo ID")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Consulta atualizada com sucesso"),
-        @ApiResponse(responseCode = "404", description = "Consulta não encontrada"),
-        @ApiResponse(responseCode = "400", description = "Erro de validação"),
-        @ApiResponse(responseCode = "500", description = "Erro interno")
+            @ApiResponse(responseCode = "200", description = "Consulta atualizada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Consulta não encontrada"),
+            @ApiResponse(responseCode = "400", description = "Erro de validação"),
+            @ApiResponse(responseCode = "500", description = "Erro interno")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<Consulta> editar(@PathVariable Long id, @Valid @RequestBody ConsultaUpdateDTO dto) {
-        return ResponseEntity.ok(service.editarConsultaComDTO(id, dto));
+    public ResponseEntity<ConsultaResponseDTO> editar(@PathVariable Long id,
+            @Valid @RequestBody ConsultaUpdateDTO dto) {
+        var atualizada = service.editarConsultaComDTO(id, dto);
+        return ResponseEntity.ok(new ConsultaResponseDTO(atualizada));
     }
 
-    @Operation(
-        summary = "Listar consultas com paginação",
-        description = "Retorna uma lista paginada de consultas ordenadas por data e ID"
-    )
+    @Operation(summary = "Listar consultas com paginação", description = "Retorna uma lista paginada de consultas ordenadas por data e ID")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Consultas listadas com sucesso"),
-        @ApiResponse(responseCode = "500", description = "Erro interno ao listar")
+            @ApiResponse(responseCode = "200", description = "Consultas listadas com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao listar")
     })
     @GetMapping
     public ResponseEntity<ConsultaPageResponseDTO> listarConsultas(
