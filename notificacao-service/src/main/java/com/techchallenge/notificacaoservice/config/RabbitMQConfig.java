@@ -1,13 +1,16 @@
 package com.techchallenge.notificacaoservice.config;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
 
-    private static final String EXCHANGE_NAME = "consultas-exchange";
+    private static final String EXCHANGE_NAME = "consulta.exchange";
 
     @Bean
     public DirectExchange exchange() {
@@ -15,22 +18,17 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue consultaCriadaQueue() {
-        return new Queue("consulta.criada");
+    public Queue consultaCreatedQueue() {
+        return new Queue("consulta.queue", true); // mesma fila usada pelo produtor
     }
 
     @Bean
-    public Queue consultaEditadaQueue() {
-        return new Queue("consulta.editada");
+    public Binding bindingCreated(Queue consultaCreatedQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(consultaCreatedQueue).to(exchange).with("consulta.created");
     }
 
     @Bean
-    public Binding bindingCriada(Queue consultaCriadaQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(consultaCriadaQueue).to(exchange).with("consulta.criada");
-    }
-
-    @Bean
-    public Binding bindingEditada(Queue consultaEditadaQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(consultaEditadaQueue).to(exchange).with("consulta.editada");
+    public Binding bindingUpdated(Queue consultaCreatedQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(consultaCreatedQueue).to(exchange).with("consulta.updated");
     }
 }
