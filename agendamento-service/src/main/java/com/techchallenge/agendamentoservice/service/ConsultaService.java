@@ -1,5 +1,6 @@
 package com.techchallenge.agendamentoservice.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -26,8 +27,8 @@ public class ConsultaService {
     private final ConsultaNotifier notifier;
 
     public ConsultaService(ConsultaRepository consultaRepository,
-                           ConsultaValidator validator,
-                           ConsultaNotifier notifier) {
+            ConsultaValidator validator,
+            ConsultaNotifier notifier) {
         this.consultaRepository = consultaRepository;
         this.validator = validator;
         this.notifier = notifier;
@@ -92,5 +93,13 @@ public class ConsultaService {
                 page.getNumber(),
                 page.getSize(),
                 page.getTotalElements());
+    }
+
+    public List<Consulta> buscarPorPaciente(Long pacienteId) {
+        return consultaRepository.findByPacienteId(pacienteId);
+    }
+
+    public List<Consulta> buscarProximasConsultas(Long pacienteId) {
+        return consultaRepository.findByPacienteIdAndDataHoraAfter(pacienteId, LocalDateTime.now());
     }
 }
