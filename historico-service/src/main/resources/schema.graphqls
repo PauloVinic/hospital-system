@@ -1,11 +1,12 @@
-type Consulta {
-  id: ID
-  pacienteId: Long
-  medicoId: Long
-  dataHora: String
+type ConsultaHistorico {
+  id: ID!
+  pacienteId: ID!
+  medicoId: ID!
+  dataHora: String!
   observacoes: String
 }
 
 type Query {
-  listarConsultas: [Consulta]
+  listarHistorico: [ConsultaHistorico]
+  listarHistoricoPorPaciente(pacienteId: ID!): [ConsultaHistorico]
 }
