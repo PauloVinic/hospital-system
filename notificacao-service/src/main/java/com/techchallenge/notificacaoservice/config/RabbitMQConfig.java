@@ -10,25 +10,23 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    private static final String EXCHANGE_NAME = "consulta.exchange";
-
     @Bean
     public DirectExchange exchange() {
-        return new DirectExchange(EXCHANGE_NAME);
+        return new DirectExchange("consulta.exchange");
     }
 
     @Bean
-    public Queue consultaCreatedQueue() {
-        return new Queue("consulta.queue", true); // mesma fila usada pelo produtor
+    public Queue consultaQueue() {
+        return new Queue("consulta.queue", true);
     }
 
     @Bean
-    public Binding bindingCreated(Queue consultaCreatedQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(consultaCreatedQueue).to(exchange).with("consulta.created");
+    public Binding bindingCreated(Queue consultaQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(consultaQueue).to(exchange).with("consulta.created");
     }
 
     @Bean
-    public Binding bindingUpdated(Queue consultaCreatedQueue, DirectExchange exchange) {
-        return BindingBuilder.bind(consultaCreatedQueue).to(exchange).with("consulta.updated");
+    public Binding bindingUpdated(Queue consultaQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(consultaQueue).to(exchange).with("consulta.updated");
     }
 }
