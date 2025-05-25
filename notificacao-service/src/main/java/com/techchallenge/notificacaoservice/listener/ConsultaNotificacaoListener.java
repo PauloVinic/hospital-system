@@ -1,29 +1,38 @@
 package com.techchallenge.notificacaoservice.listener;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.support.AmqpHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import com.techchallenge.notificacaoservice.dto.NotificacaoConsultaDTO;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 public class ConsultaNotificacaoListener {
 
-    @RabbitListener(queues = "consulta.criada")
-    public void aoReceberConsultaCriada(NotificacaoConsultaDTO dto) {
-        System.out.println("📨 Consulta criada:");
-        imprimirDados(dto);
-    }
+    @RabbitListener(queues = "consulta.queue")
+    public void aoReceberMensagem(NotificacaoConsultaDTO dto,
+            @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
 
-    @RabbitListener(queues = "consulta.editada")
-    public void aoReceberConsultaEditada(NotificacaoConsultaDTO dto) {
-        System.out.println("✏️ Consulta editada:");
+        switch (routingKey) {
+            case "consulta.created" -> log.info("📨 Consulta criada:");
+            case "consulta.updated" -> log.info("✏️ Consulta atualizada:");
+            default -> {
+                log.warn("❓ Evento não reconhecido: {}", routingKey);
+                return;
+            }
+        }
+
         imprimirDados(dto);
     }
 
     private void imprimirDados(NotificacaoConsultaDTO dto) {
-        System.out.println("Consulta ID: " + dto.getIdConsulta());
-        System.out.println("Paciente ID: " + dto.getPacienteId());
-        System.out.println("Email: " + dto.getEmailPaciente());
-        System.out.println("Data e Hora: " + dto.getDataHora());
+        log.info("Consulta ID: {}", dto.getIdConsulta());
+        log.info("Paciente ID: {}", dto.getPacienteId());
+        log.info("Email: {}", dto.getEmailPaciente());
+        log.info("Data e Hora: {}", dto.getDataHora());
     }
 }

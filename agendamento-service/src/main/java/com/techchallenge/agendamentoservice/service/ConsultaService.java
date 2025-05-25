@@ -12,6 +12,7 @@ import com.techchallenge.agendamentoservice.dto.ConsultaPageResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaUpdateDTO;
+import com.techchallenge.agendamentoservice.dto.NotificacaoConsultaDTO;
 import com.techchallenge.agendamentoservice.exception.BusinessException;
 import com.techchallenge.agendamentoservice.repository.ConsultaRepository;
 import com.techchallenge.agendamentoservice.service.notifier.ConsultaNotifier;
@@ -46,7 +47,13 @@ public class ConsultaService {
                 .build();
 
         Consulta consultaSalva = consultaRepository.save(consulta);
-        notifier.enviarEvento("consulta.created", consultaSalva);
+        NotificacaoConsultaDTO dtoNotificacao = new NotificacaoConsultaDTO(
+                consultaSalva.getId(),
+                consultaSalva.getPacienteId(),
+                "paciente@email.com", // ⚠️ Substitua pelo e-mail real se tiver
+                consultaSalva.getDataHora());
+
+        notifier.enviarEvento("consulta.created", dtoNotificacao);
         return consultaSalva;
     }
 
@@ -61,7 +68,11 @@ public class ConsultaService {
         consultaExistente.setPacienteId(consultaAtualizada.getPacienteId());
 
         Consulta consultaSalva = consultaRepository.save(consultaExistente);
-        notifier.enviarEvento("consulta.updated", consultaSalva);
+        notifier.enviarEvento("consulta.updated", new NotificacaoConsultaDTO(
+                consultaSalva.getId(),
+                consultaSalva.getPacienteId(),
+                "paciente@email.com", // Substituir futuramente por e-mail real
+                consultaSalva.getDataHora()));
         return consultaSalva;
     }
 

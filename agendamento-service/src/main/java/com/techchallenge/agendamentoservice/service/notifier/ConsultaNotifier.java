@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.techchallenge.agendamentoservice.domain.Consulta;
 import com.techchallenge.agendamentoservice.exception.BusinessException;
 
 @Component
@@ -20,12 +19,12 @@ public class ConsultaNotifier {
         this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
-    public void enviarEvento(String routingKey, Consulta consulta) {
+    public void enviarEvento(String routingKey, Object payload) {
         try {
-            String json = objectMapper.writeValueAsString(consulta);
+            String json = objectMapper.writeValueAsString(payload);
             rabbitTemplate.convertAndSend("consulta.exchange", routingKey, json);
         } catch (JsonProcessingException e) {
-            throw new BusinessException("Erro ao serializar consulta para JSON");
+            throw new BusinessException("Erro ao serializar mensagem para JSON");
         }
     }
 }

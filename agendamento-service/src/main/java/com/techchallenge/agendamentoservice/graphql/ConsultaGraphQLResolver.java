@@ -1,13 +1,13 @@
 package com.techchallenge.agendamentoservice.graphql;
 
-import com.techchallenge.agendamentoservice.domain.Consulta;
-import com.techchallenge.agendamentoservice.service.ConsultaService;
+import java.util.List;
+
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.service.ConsultaService;
 
 @Controller
 public class ConsultaGraphQLResolver {
