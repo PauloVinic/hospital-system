@@ -1,53 +1,108 @@
 {
-    "info": {
-        "name": "Hospital System - Agendamento (Atualizada)",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-    },
-    "item": [
-        {
-            "name": "Criar Consulta",
-            "request": {
-                "method": "POST",
-                "header": [
-                    {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                    }
-                ],
-                "body": {
-                    "mode": "raw",
-                    "raw": "{\n    \"medicoId\": 1,\n    \"pacienteId\": 1,\n    \"dataHora\": \"2025-05-25T10:00:00\",\n    \"observacoes\": \"Consulta de rotina\"\n}"
-                },
-                "url": {
-                    "raw": "http://localhost:8081/consultas",
-                    "protocol": "http",
-                    "host": [
-                        "localhost"
-                    ],
-                    "port": "8081",
-                    "path": [
-                        "consultas"
-                    ]
-                }
-            }
+  "info": {
+    "name": "Hospital System - Fase 3 (Completa)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Criar Consulta",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"medicoId\": 1,\n  \"pacienteId\": 1,\n  \"dataHora\": \"2025-05-25T10:00:00\",\n  \"observacoes\": \"Consulta de rotina\"\n}"
         },
-        {
-            "name": "Listar Consultas",
-            "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                    "raw": "http://localhost:8081/consultas",
-                    "protocol": "http",
-                    "host": [
-                        "localhost"
-                    ],
-                    "port": "8081",
-                    "path": [
-                        "consultas"
-                    ]
-                }
-            }
+        "url": {
+          "raw": "http://localhost:8081/consultas",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "consultas"
+          ]
         }
-    ]
+      }
+    },
+    {
+      "name": "Listar Consultas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8081/consultas",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "consultas"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Editar Consulta",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"medicoId\": 1,\n  \"pacienteId\": 1,\n  \"dataHora\": \"2025-05-25T11:00:00\",\n  \"observacoes\": \"Consulta remarcada\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/consultas/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "consultas",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GraphQL - Listar Consultas",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"query { consultas { id pacienteId medicoId dataHora observacoes } }\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/graphql",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8081",
+          "path": [
+            "graphql"
+          ]
+        }
+      }
+    }
+  ]
 }
