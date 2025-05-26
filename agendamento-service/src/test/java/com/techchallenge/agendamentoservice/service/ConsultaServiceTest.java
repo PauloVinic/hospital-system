@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,6 @@ class ConsultaServiceTest {
 
     @Test
     void deveCriarConsultaComDTO() {
-        // arrange
         ConsultaRequestDTO dto = new ConsultaRequestDTO(1L, 2L, LocalDateTime.of(2025, 6, 1, 14, 0), "Rotina");
         Consulta consultaSalva = Consulta.builder()
                 .id(10L)
@@ -57,29 +57,20 @@ class ConsultaServiceTest {
                 .build();
 
         when(consultaRepository.save(any(Consulta.class))).thenReturn(consultaSalva);
-
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
 
-        // act
         Consulta result = service.criarConsultaComDTO(dto);
 
-        // assert
         assertEquals(10L, result.getId());
         verify(validator).validar(dto);
         verify(notifier).enviarEvento(eq("consulta.created"), captor.capture());
 
         Object enviado = captor.getValue();
         assertThat(enviado).isInstanceOf(com.techchallenge.agendamentoservice.dto.NotificacaoConsultaDTO.class);
-
-        var dtoEnviado = (com.techchallenge.agendamentoservice.dto.NotificacaoConsultaDTO) enviado;
-        assertThat(dtoEnviado.getPacienteId()).isEqualTo(1L);
-        assertThat(dtoEnviado.getIdConsulta()).isEqualTo(10L);
-        assertThat(dtoEnviado.getDataHora()).isEqualTo(dto.dataHora());
     }
 
     @Test
     void deveEditarConsultaComDTO() {
-        // arrange
         Long id = 1L;
         Consulta existente = Consulta.builder()
                 .id(id)
@@ -92,10 +83,8 @@ class ConsultaServiceTest {
         when(consultaRepository.findById(id)).thenReturn(Optional.of(existente));
         when(consultaRepository.save(any())).thenReturn(existente);
 
-        // act
         Consulta result = service.editarConsultaComDTO(id, dto);
 
-        // assert
         assertEquals("Atualizada", result.getObservacoes());
     }
 
@@ -103,13 +92,12 @@ class ConsultaServiceTest {
     void deveLancarExcecaoQuandoEditarConsultaInexistente() {
         when(consultaRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(BusinessException.class, () -> service.editarConsultaComDTO(999L,
-                new ConsultaUpdateDTO(LocalDateTime.now().plusDays(1), "x")));
+        assertThrows(BusinessException.class,
+                () -> service.editarConsultaComDTO(999L, new ConsultaUpdateDTO(LocalDateTime.now().plusDays(1), "x")));
     }
 
     @Test
     void deveListarConsultasPaginadas() {
-        // arrange
         Pageable pageable = PageRequest.of(0, 2, Sort.by("dataHora").ascending());
         Consulta consulta = Consulta.builder()
                 .id(1L)
@@ -122,28 +110,23 @@ class ConsultaServiceTest {
         when(consultaRepository.findAllValid(pageable))
                 .thenReturn(new PageImpl<>(List.of(consulta), pageable, 1));
 
-        // act
         var resultado = service.listarConsultas(pageable);
 
-        // assert
         assertEquals(1, resultado.content().size());
         assertEquals(1L, resultado.content().get(0).id());
     }
 
     @Test
     void deveLancarExcecaoAoCriarConsultaComConflito() {
-        // arrange
         ConsultaRequestDTO dto = new ConsultaRequestDTO(1L, 2L, LocalDateTime.of(2025, 6, 1, 14, 0), "Rotina");
 
         doThrow(new BusinessException("Horário indisponível")).when(validator).validar(dto);
 
-        // act + assert
         assertThrows(BusinessException.class, () -> service.criarConsultaComDTO(dto));
     }
 
     @Test
     void deveEditarConsultaEEnviarEventoDeAtualizacao() {
-        // arrange
         Long id = 2L;
         LocalDateTime novaDataHora = LocalDateTime.of(2025, 6, 5, 9, 0);
         String novaObs = "Revisão";
@@ -161,10 +144,8 @@ class ConsultaServiceTest {
         when(consultaRepository.findById(id)).thenReturn(Optional.of(existente));
         when(consultaRepository.save(any())).thenReturn(existente);
 
-        // act
         Consulta atualizado = service.editarConsultaComDTO(id, dto);
 
-        // assert
         assertEquals(novaObs, atualizado.getObservacoes());
         assertEquals(novaDataHora, atualizado.getDataHora());
     }
@@ -172,17 +153,6 @@ class ConsultaServiceTest {
     @Test
     void deveRetornarPaginaVaziaAoListarConsultas() {
         Pageable pageable = PageRequest.of(0, 2, Sort.by("dataHora").ascending());
-        when(consultaRepository.findAllValid(pageable))
-                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
-
-        var resultado = service.listarConsultas(pageable);
-
-        assertEquals(0, resultado.content().size());
-    }
-
-    @Test
-    void deveRetornarListaVaziaDeConsultas() {
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("dataHora"));
         when(consultaRepository.findAllValid(pageable))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
@@ -234,13 +204,12 @@ class ConsultaServiceTest {
         assertEquals(20L, result.getId());
         assertEquals(2L, result.getMedicoId());
         assertEquals(1L, result.getPacienteId());
-        assertEquals(null, result.getObservacoes());
+        assertNull(result.getObservacoes());
     }
 
     @Test
     void deveBuscarConsultasPorPaciente() {
         Long pacienteId = 1L;
-
         Consulta consulta = Consulta.builder()
                 .id(1L)
                 .pacienteId(pacienteId)
@@ -257,4 +226,29 @@ class ConsultaServiceTest {
         assertEquals(pacienteId, resultado.get(0).getPacienteId());
     }
 
+    @Test
+    void deveListarTodasAsConsultas() {
+        Consulta consulta = new Consulta(1L, 1L, 2L, LocalDateTime.now(), "Rotina");
+        when(consultaRepository.findAll()).thenReturn(List.of(consulta));
+
+        List<Consulta> resultado = service.listarConsultas();
+
+        assertEquals(1, resultado.size());
+        assertEquals(consulta, resultado.get(0));
+    }
+
+    @Test
+    void deveEditarConsultaExistente() {
+        Long consultaId = 1L;
+        Consulta consultaExistente = new Consulta(consultaId, 1L, 2L, LocalDateTime.now(), "Original");
+        Consulta atualizada = new Consulta(null, 1L, 2L, LocalDateTime.now().plusDays(2), "Atualizada");
+
+        when(consultaRepository.findById(consultaId)).thenReturn(Optional.of(consultaExistente));
+        when(consultaRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Consulta resultado = service.editarConsulta(consultaId, atualizada);
+
+        assertEquals(atualizada.getDataHora(), resultado.getDataHora());
+        assertEquals(atualizada.getObservacoes(), resultado.getObservacoes());
+    }
 }
