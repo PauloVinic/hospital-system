@@ -1,9 +1,16 @@
 spring:
+  graphql:
+    path: /graphql
+    schema:
+      locations: classpath:schema.graphqls
+    graphiql:
+      enabled: false
+
   datasource:
     url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
     username: sa
     password:
+    driver-class-name: org.h2.Driver
     hikari:
       maximum-pool-size: 5
 
@@ -11,15 +18,21 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
 
   sql:
     init:
-      mode: never
+      mode: always
 
   security:
     user:
       name: testuser
       password: testpass
 
-graphql:
-  path: /graphql
+logging:
+  level:
+    org.springframework.graphql: DEBUG
+    com.techchallenge: TRACE

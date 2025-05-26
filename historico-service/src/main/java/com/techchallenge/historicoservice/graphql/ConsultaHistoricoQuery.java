@@ -1,13 +1,15 @@
 package com.techchallenge.historicoservice.graphql;
 
-import com.techchallenge.historicoservice.domain.ConsultaHistorico;
-import com.techchallenge.historicoservice.dto.ConsultaHistoricoDTO;
-import com.techchallenge.historicoservice.repository.ConsultaHistoricoRepository;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.techchallenge.historicoservice.domain.ConsultaHistorico;
+import com.techchallenge.historicoservice.dto.ConsultaHistoricoDTO;
+import com.techchallenge.historicoservice.repository.ConsultaHistoricoRepository;
 
 @Controller
 public class ConsultaHistoricoQuery {
@@ -26,7 +28,7 @@ public class ConsultaHistoricoQuery {
     }
 
     @QueryMapping
-    public List<ConsultaHistoricoDTO> listarHistoricoPorPaciente(Long pacienteId) {
+    public List<ConsultaHistoricoDTO> listarHistoricoPorPaciente(@Argument Long pacienteId) {
         return repository.findAll().stream()
                 .filter(c -> c.getPacienteId().equals(pacienteId))
                 .map(this::toDTO)

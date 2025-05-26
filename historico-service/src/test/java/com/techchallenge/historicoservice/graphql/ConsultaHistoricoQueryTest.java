@@ -7,19 +7,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.graphql.test.tester.GraphQlTester;
 import org.springframework.graphql.test.tester.HttpGraphQlTester;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.techchallenge.historicoservice.domain.ConsultaHistorico;
 import com.techchallenge.historicoservice.repository.ConsultaHistoricoRepository;
 
+@Import(org.springframework.boot.autoconfigure.graphql.GraphQlAutoConfiguration.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
 @ActiveProfiles("test")
-class ConsultaHistoricoQueryTest {
+@TestPropertySource(locations = "classpath:application-test.yml")
+public class ConsultaHistoricoQueryTest {
 
     @Autowired
     private WebTestClient webTestClient;
@@ -33,8 +39,9 @@ class ConsultaHistoricoQueryTest {
     void setup() {
         this.graphQlTester = HttpGraphQlTester.builder(
                 webTestClient.mutate()
-                        .defaultHeaders(headers -> headers.setBasicAuth("testuser", "testpass"))
-        ).build();
+                        .defaultHeaders(headers -> headers.setBasicAuth("testuser", "testpass")))
+                .url("/graphql")
+                .build();
     }
 
     @Test
@@ -49,16 +56,16 @@ class ConsultaHistoricoQueryTest {
         when(repository.findAll()).thenReturn(List.of(historico));
 
         String query = """
-            query {
-                listarHistorico {
-                    id
-                    pacienteId
-                    medicoId
-                    dataHora
-                    observacoes
-                }
-            }
-        """;
+                    query {
+                        listarHistorico {
+                            id
+                            pacienteId
+                            medicoId
+                            dataHora
+                            observacoes
+                        }
+                    }
+                """;
 
         graphQlTester.document(query)
                 .execute()
@@ -79,13 +86,13 @@ class ConsultaHistoricoQueryTest {
         when(repository.findAll()).thenReturn(List.of(historico));
 
         String query = """
-            query {
-                listarHistoricoPorPaciente(pacienteId: 321) {
-                    id
-                    dataHora
-                }
-            }
-        """;
+                    query {
+                        listarHistoricoPorPaciente(pacienteId: 321) {
+                            id
+                            dataHora
+                        }
+                    }
+                """;
 
         graphQlTester.document(query)
                 .execute()

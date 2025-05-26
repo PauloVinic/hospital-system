@@ -1,4 +1,4 @@
-type ConsultaHistorico {
+type ConsultaHistoricoDTO {
   id: ID!
   pacienteId: ID!
   medicoId: ID!
@@ -7,6 +7,6 @@ type ConsultaHistorico {
 }
 
 type Query {
-  listarHistorico: [ConsultaHistorico]
-  listarHistoricoPorPaciente(pacienteId: ID!): [ConsultaHistorico]
+  listarHistorico: [ConsultaHistoricoDTO]
+  listarHistoricoPorPaciente(pacienteId: ID!): [ConsultaHistoricoDTO]
 }
