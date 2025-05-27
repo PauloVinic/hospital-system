@@ -66,7 +66,7 @@ class ConsultaResolverTest {
   void deveRetornarConsultasViaGraphQL() {
     Consulta consulta = new Consulta(1L, 1L, 2L, LocalDateTime.now().plusDays(1), "Rotina");
 
-    when(consultaService.listarConsultas()).thenReturn(List.of(consulta));
+    when(consultaService.listarTodasConsultas()).thenReturn(List.of(consulta));
 
     String query = """
         {

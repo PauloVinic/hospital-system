@@ -72,7 +72,7 @@ public class ConsultaController {
     @GetMapping
     public ResponseEntity<ConsultaPageResponseDTO> listarConsultas(
             @PageableDefault(sort = { "dataHora", "id" }, direction = Sort.Direction.ASC) Pageable pageable) {
-        var page = service.listarConsultas(pageable);
+        var page = service.listarConsultasPaginadas(pageable);
         return ResponseEntity.ok(page);
     }
 }

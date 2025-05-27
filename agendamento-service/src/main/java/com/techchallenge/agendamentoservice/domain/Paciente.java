@@ -16,6 +16,6 @@ public class Paciente {
 
     @Id
     private Long id;
-
-    private String nome; // opcional
+    private String nome;
+    private String email;
 }

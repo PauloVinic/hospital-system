@@ -23,7 +23,7 @@ public class ConsultaResolver {
 
     @QueryMapping
     public List<Consulta> listarConsultas() {
-        return service.listarConsultas();
+        return service.listarTodasConsultas();
     }
 
     @MutationMapping

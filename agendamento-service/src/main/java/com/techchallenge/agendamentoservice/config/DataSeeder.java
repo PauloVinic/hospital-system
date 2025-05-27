@@ -22,9 +22,9 @@ public class DataSeeder {
             }
 
             if (pacienteRepository.count() == 0) {
-                pacienteRepository.save(new Paciente(1L, "Paulo Martins"));
-                pacienteRepository.save(new Paciente(2L, "Mariana Silva"));
-                pacienteRepository.save(new Paciente(3L, "Carlos Eduardo"));
+                pacienteRepository.save(new Paciente(1L, "Paulo Martins", "paulo@email.com"));
+                pacienteRepository.save(new Paciente(2L, "Mariana Silva", "mariana@email.com"));
+                pacienteRepository.save(new Paciente(3L, "Carlos Eduardo", "carlos@email.com"));
             }
         };
     }

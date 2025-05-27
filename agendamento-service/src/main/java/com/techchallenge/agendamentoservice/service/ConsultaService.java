@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.domain.Paciente;
 import com.techchallenge.agendamentoservice.dto.ConsultaPageResponseDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaResponseDTO;
@@ -15,25 +16,21 @@ import com.techchallenge.agendamentoservice.dto.ConsultaUpdateDTO;
 import com.techchallenge.agendamentoservice.dto.NotificacaoConsultaDTO;
 import com.techchallenge.agendamentoservice.exception.BusinessException;
 import com.techchallenge.agendamentoservice.repository.ConsultaRepository;
+import com.techchallenge.agendamentoservice.repository.PacienteRepository;
 import com.techchallenge.agendamentoservice.service.notifier.ConsultaNotifier;
 import com.techchallenge.agendamentoservice.service.validator.ConsultaValidator;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ConsultaService {
 
     private final ConsultaRepository consultaRepository;
-    private final ConsultaValidator validator;
+    private final PacienteRepository pacienteRepository;
     private final ConsultaNotifier notifier;
-
-    public ConsultaService(ConsultaRepository consultaRepository,
-            ConsultaValidator validator,
-            ConsultaNotifier notifier) {
-        this.consultaRepository = consultaRepository;
-        this.validator = validator;
-        this.notifier = notifier;
-    }
+    private final ConsultaValidator validator;
 
     @Transactional
     public Consulta criarConsultaComDTO(ConsultaRequestDTO dto) {
@@ -47,32 +44,15 @@ public class ConsultaService {
                 .build();
 
         Consulta consultaSalva = consultaRepository.save(consulta);
-        NotificacaoConsultaDTO dtoNotificacao = new NotificacaoConsultaDTO(
+        Paciente paciente = pacienteRepository.findById(dto.pacienteId())
+                .orElseThrow(() -> new BusinessException("Paciente informado não existe"));
+
+        notifier.enviarEvento("consulta.create", new NotificacaoConsultaDTO(
                 consultaSalva.getId(),
                 consultaSalva.getPacienteId(),
-                "paciente@email.com", // ⚠️ Substitua pelo e-mail real se tiver
-                consultaSalva.getDataHora());
-
-        notifier.enviarEvento("consulta.created", dtoNotificacao);
-        return consultaSalva;
-    }
-
-    @Transactional
-    public Consulta editarConsulta(Long id, Consulta consultaAtualizada) {
-        Consulta consultaExistente = consultaRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Consulta com ID " + id + " não encontrada"));
-
-        consultaExistente.setDataHora(consultaAtualizada.getDataHora());
-        consultaExistente.setObservacoes(consultaAtualizada.getObservacoes());
-        consultaExistente.setMedicoId(consultaAtualizada.getMedicoId());
-        consultaExistente.setPacienteId(consultaAtualizada.getPacienteId());
-
-        Consulta consultaSalva = consultaRepository.save(consultaExistente);
-        notifier.enviarEvento("consulta.updated", new NotificacaoConsultaDTO(
-                consultaSalva.getId(),
-                consultaSalva.getPacienteId(),
-                "paciente@email.com", // Substituir futuramente por e-mail real
+                paciente.getEmail(),
                 consultaSalva.getDataHora()));
+
         return consultaSalva;
     }
 
@@ -81,17 +61,27 @@ public class ConsultaService {
         Consulta consulta = consultaRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Consulta com ID " + id + " não encontrada"));
 
+        if (dto.dataHora().isBefore(LocalDateTime.now())) {
+            throw new BusinessException("Não é possível reagendar para uma data/hora no passado");
+        }
+
         consulta.setDataHora(dto.dataHora());
         consulta.setObservacoes(dto.observacoes());
 
-        return consultaRepository.save(consulta);
+        Consulta atualizada = consultaRepository.save(consulta);
+        Paciente paciente = pacienteRepository.findById(atualizada.getPacienteId())
+                .orElseThrow(() -> new BusinessException("Paciente informado não existe"));
+
+        notifier.enviarEvento("consulta.update", new NotificacaoConsultaDTO(
+                atualizada.getId(),
+                atualizada.getPacienteId(),
+                paciente.getEmail(),
+                atualizada.getDataHora()));
+
+        return atualizada;
     }
 
-    public List<Consulta> listarConsultas() {
-        return consultaRepository.findAll();
-    }
-
-    public ConsultaPageResponseDTO listarConsultas(Pageable pageable) {
+    public ConsultaPageResponseDTO listarConsultasPaginadas(Pageable pageable) {
         Page<Consulta> page = consultaRepository.findAllValid(pageable);
 
         List<ConsultaResponseDTO> dtos = page.getContent()
@@ -104,6 +94,10 @@ public class ConsultaService {
                 page.getNumber(),
                 page.getSize(),
                 page.getTotalElements());
+    }
+
+    public List<Consulta> listarTodasConsultas() {
+        return consultaRepository.findAll();
     }
 
     public List<Consulta> buscarPorPaciente(Long pacienteId) {

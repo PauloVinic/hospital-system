@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,10 +22,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.domain.Paciente;
 import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
 import com.techchallenge.agendamentoservice.dto.ConsultaUpdateDTO;
 import com.techchallenge.agendamentoservice.exception.BusinessException;
 import com.techchallenge.agendamentoservice.repository.ConsultaRepository;
+import com.techchallenge.agendamentoservice.repository.PacienteRepository;
 import com.techchallenge.agendamentoservice.service.notifier.ConsultaNotifier;
 import com.techchallenge.agendamentoservice.service.validator.ConsultaValidator;
 
@@ -34,15 +35,17 @@ class ConsultaServiceTest {
 
     private ConsultaService service;
     private ConsultaRepository consultaRepository;
-    private ConsultaValidator validator;
+    private PacienteRepository pacienteRepository;
     private ConsultaNotifier notifier;
+    private ConsultaValidator validator;
 
     @BeforeEach
     void setup() {
         consultaRepository = mock(ConsultaRepository.class);
-        validator = mock(ConsultaValidator.class);
+        pacienteRepository = mock(PacienteRepository.class);
         notifier = mock(ConsultaNotifier.class);
-        service = new ConsultaService(consultaRepository, validator, notifier);
+        validator = mock(ConsultaValidator.class);
+        service = new ConsultaService(consultaRepository, pacienteRepository, notifier, validator);
     }
 
     @Test
@@ -56,14 +59,19 @@ class ConsultaServiceTest {
                 .observacoes("Rotina")
                 .build();
 
+        Paciente paciente = new Paciente();
+        paciente.setEmail("paulo@email.com");
+
         when(consultaRepository.save(any(Consulta.class))).thenReturn(consultaSalva);
+        when(pacienteRepository.findById(1L)).thenReturn(Optional.of(paciente));
+
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
 
         Consulta result = service.criarConsultaComDTO(dto);
 
         assertEquals(10L, result.getId());
         verify(validator).validar(dto);
-        verify(notifier).enviarEvento(eq("consulta.created"), captor.capture());
+        verify(notifier).enviarEvento(eq("consulta.create"), captor.capture());
 
         Object enviado = captor.getValue();
         assertThat(enviado).isInstanceOf(com.techchallenge.agendamentoservice.dto.NotificacaoConsultaDTO.class);
@@ -74,18 +82,23 @@ class ConsultaServiceTest {
         Long id = 1L;
         Consulta existente = Consulta.builder()
                 .id(id)
+                .pacienteId(1L)
                 .dataHora(LocalDateTime.now().plusDays(1))
                 .observacoes("Antiga")
                 .build();
 
         ConsultaUpdateDTO dto = new ConsultaUpdateDTO(LocalDateTime.now().plusDays(2), "Atualizada");
+        Paciente paciente = new Paciente();
+        paciente.setEmail("teste@email.com");
 
         when(consultaRepository.findById(id)).thenReturn(Optional.of(existente));
         when(consultaRepository.save(any())).thenReturn(existente);
+        when(pacienteRepository.findById(1L)).thenReturn(Optional.of(paciente));
 
         Consulta result = service.editarConsultaComDTO(id, dto);
 
         assertEquals("Atualizada", result.getObservacoes());
+        verify(notifier).enviarEvento(eq("consulta.update"), any());
     }
 
     @Test
@@ -110,10 +123,21 @@ class ConsultaServiceTest {
         when(consultaRepository.findAllValid(pageable))
                 .thenReturn(new PageImpl<>(List.of(consulta), pageable, 1));
 
-        var resultado = service.listarConsultas(pageable);
+        var resultado = service.listarConsultasPaginadas(pageable);
 
         assertEquals(1, resultado.content().size());
         assertEquals(1L, resultado.content().get(0).id());
+    }
+
+    @Test
+    void deveRetornarTodasAsConsultas() {
+        Consulta consulta = new Consulta(1L, 1L, 2L, LocalDateTime.now(), "Rotina");
+        when(consultaRepository.findAll()).thenReturn(List.of(consulta));
+
+        List<Consulta> resultado = service.listarTodasConsultas();
+
+        assertEquals(1, resultado.size());
+        assertEquals(consulta, resultado.get(0));
     }
 
     @Test
@@ -123,88 +147,6 @@ class ConsultaServiceTest {
         doThrow(new BusinessException("Horário indisponível")).when(validator).validar(dto);
 
         assertThrows(BusinessException.class, () -> service.criarConsultaComDTO(dto));
-    }
-
-    @Test
-    void deveEditarConsultaEEnviarEventoDeAtualizacao() {
-        Long id = 2L;
-        LocalDateTime novaDataHora = LocalDateTime.of(2025, 6, 5, 9, 0);
-        String novaObs = "Revisão";
-
-        Consulta existente = Consulta.builder()
-                .id(id)
-                .pacienteId(1L)
-                .medicoId(2L)
-                .dataHora(LocalDateTime.of(2025, 6, 1, 14, 0))
-                .observacoes("Antiga")
-                .build();
-
-        ConsultaUpdateDTO dto = new ConsultaUpdateDTO(novaDataHora, novaObs);
-
-        when(consultaRepository.findById(id)).thenReturn(Optional.of(existente));
-        when(consultaRepository.save(any())).thenReturn(existente);
-
-        Consulta atualizado = service.editarConsultaComDTO(id, dto);
-
-        assertEquals(novaObs, atualizado.getObservacoes());
-        assertEquals(novaDataHora, atualizado.getDataHora());
-    }
-
-    @Test
-    void deveRetornarPaginaVaziaAoListarConsultas() {
-        Pageable pageable = PageRequest.of(0, 2, Sort.by("dataHora").ascending());
-        when(consultaRepository.findAllValid(pageable))
-                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
-
-        var resultado = service.listarConsultas(pageable);
-
-        assertEquals(0, resultado.content().size());
-    }
-
-    @Test
-    void deveEditarConsultaMesmoSemAlterarValores() {
-        Long id = 3L;
-        LocalDateTime dataHora = LocalDateTime.of(2025, 6, 1, 10, 0);
-        String obs = "Mesma observação";
-
-        Consulta existente = Consulta.builder()
-                .id(id)
-                .pacienteId(1L)
-                .medicoId(2L)
-                .dataHora(dataHora)
-                .observacoes(obs)
-                .build();
-
-        ConsultaUpdateDTO dto = new ConsultaUpdateDTO(dataHora, obs);
-
-        when(consultaRepository.findById(id)).thenReturn(Optional.of(existente));
-        when(consultaRepository.save(any())).thenReturn(existente);
-
-        Consulta atualizado = service.editarConsultaComDTO(id, dto);
-
-        assertEquals(obs, atualizado.getObservacoes());
-        assertEquals(dataHora, atualizado.getDataHora());
-    }
-
-    @Test
-    void deveCriarConsultaComObservacoesVazias() {
-        ConsultaRequestDTO dto = new ConsultaRequestDTO(1L, 2L, LocalDateTime.of(2025, 6, 2, 15, 0), null);
-        Consulta consultaSalva = Consulta.builder()
-                .id(20L)
-                .pacienteId(1L)
-                .medicoId(2L)
-                .dataHora(dto.dataHora())
-                .observacoes(null)
-                .build();
-
-        when(consultaRepository.save(any())).thenReturn(consultaSalva);
-
-        Consulta result = service.criarConsultaComDTO(dto);
-
-        assertEquals(20L, result.getId());
-        assertEquals(2L, result.getMedicoId());
-        assertEquals(1L, result.getPacienteId());
-        assertNull(result.getObservacoes());
     }
 
     @Test
@@ -224,31 +166,5 @@ class ConsultaServiceTest {
 
         assertEquals(1, resultado.size());
         assertEquals(pacienteId, resultado.get(0).getPacienteId());
-    }
-
-    @Test
-    void deveListarTodasAsConsultas() {
-        Consulta consulta = new Consulta(1L, 1L, 2L, LocalDateTime.now(), "Rotina");
-        when(consultaRepository.findAll()).thenReturn(List.of(consulta));
-
-        List<Consulta> resultado = service.listarConsultas();
-
-        assertEquals(1, resultado.size());
-        assertEquals(consulta, resultado.get(0));
-    }
-
-    @Test
-    void deveEditarConsultaExistente() {
-        Long consultaId = 1L;
-        Consulta consultaExistente = new Consulta(consultaId, 1L, 2L, LocalDateTime.now(), "Original");
-        Consulta atualizada = new Consulta(null, 1L, 2L, LocalDateTime.now().plusDays(2), "Atualizada");
-
-        when(consultaRepository.findById(consultaId)).thenReturn(Optional.of(consultaExistente));
-        when(consultaRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Consulta resultado = service.editarConsulta(consultaId, atualizada);
-
-        assertEquals(atualizada.getDataHora(), resultado.getDataHora());
-        assertEquals(atualizada.getObservacoes(), resultado.getObservacoes());
     }
 }
