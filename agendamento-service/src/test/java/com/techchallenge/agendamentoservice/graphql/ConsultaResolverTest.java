@@ -14,9 +14,10 @@ import org.springframework.graphql.test.tester.GraphQlTester;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.techchallenge.agendamentoservice.domain.Consulta;
+import com.techchallenge.agendamentoservice.exception.BusinessException;
 import com.techchallenge.agendamentoservice.service.ConsultaService;
 
-@ActiveProfiles("test") // ✅ Aqui você ativa o profile que desativa a segurança
+@ActiveProfiles("test")
 @GraphQlTest(ConsultaResolver.class)
 class ConsultaResolverTest {
 
@@ -43,8 +44,8 @@ class ConsultaResolverTest {
               criarConsulta(input: {
                 pacienteId: 1,
                 medicoId: 2,
-                dataHora: "2025-06-01T14:00:00",
-                observacoes: "Consulta via GraphQL"
+                dataHora: \"2025-06-01T14:00:00\",
+                observacoes: \"Consulta via GraphQL\"
               }) {
                 id
                 pacienteId
@@ -85,4 +86,27 @@ class ConsultaResolverTest {
         .path("listarConsultas[0].id").entity(Long.class).isEqualTo(1L);
   }
 
+  @Test
+  void deveLancarErroAoCriarConsultaComDataNoPassado() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: 1,
+                medicoId: 2,
+                dataHora: \"2020-01-01T10:00:00\",
+                observacoes: \"Fora do prazo\"
+              }) {
+                id
+              }
+            }
+        """;
+
+    Mockito.when(consultaService.criarConsultaComDTO(any()))
+           .thenThrow(new BusinessException("A data da consulta deve ser futura"));
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> error.getMessage().contains("futura"));
+  }
 }
