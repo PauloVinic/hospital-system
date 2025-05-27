@@ -2,6 +2,7 @@ package com.techchallenge.agendamentoservice.graphql;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
@@ -83,7 +84,8 @@ class ConsultaResolverTest {
 
     graphQlTester.document(query)
         .execute()
-        .path("listarConsultas[0].id").entity(Long.class).isEqualTo(1L);
+        .path("listarConsultas[0].id").entity(Long.class).isEqualTo(1L)
+        .path("listarConsultas[0].observacoes").entity(String.class).isEqualTo("Rotina");
   }
 
   @Test
@@ -107,6 +109,27 @@ class ConsultaResolverTest {
     graphQlTester.document(mutation)
         .execute()
         .errors()
-        .expect(error -> error.getMessage().contains("futura"));
+        .expect(error -> Optional.ofNullable(error.getMessage()).orElse("").contains("futura"));
+  }
+
+  @Test
+  void deveLancarErroAoCriarConsultaComDadosNulos() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: null,
+                medicoId: 2,
+                dataHora: \"2025-06-01T10:00:00\",
+                observacoes: \"Teste\"
+              }) {
+                id
+              }
+            }
+        """;
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> Optional.ofNullable(error.getMessage()).orElse("").toLowerCase().contains("null"));
   }
 }
