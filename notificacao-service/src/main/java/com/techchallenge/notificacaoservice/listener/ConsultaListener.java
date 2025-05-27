@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RabbitListener(queues = "consulta.queue", errorHandler = "rabbitMQErrorHandler")
 public class ConsultaListener {
 
     private final NotificationService notificationService;
@@ -24,17 +25,21 @@ public class ConsultaListener {
     public ConsultaListener(NotificationService notificationService) {
         this.notificationService = notificationService;
         this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule()); // Habilita suporte ao LocalDateTime
+        this.objectMapper.registerModule(new JavaTimeModule()); // Suporte a LocalDateTime
     }
 
     @RabbitListener(queues = "consulta.queue")
     public void receberMensagem(String payload,
                                  @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
+        log.info("[RabbitMQ] Mensagem recebida. RoutingKey: {}", routingKey);
+        log.debug("[RabbitMQ] Payload recebido: {}", payload);
+
         try {
             NotificacaoConsultaDTO dto = objectMapper.readValue(payload, NotificacaoConsultaDTO.class);
+            log.info("[RabbitMQ] Payload desserializado com sucesso para NotificacaoConsultaDTO.");
             notificationService.processarConsulta(dto, routingKey);
         } catch (IOException e) {
-            log.error("Erro ao desserializar a mensagem JSON recebida do RabbitMQ", e);
+            log.error("[RabbitMQ] Falha ao desserializar JSON. Payload: {}", payload, e);
         }
     }
 }

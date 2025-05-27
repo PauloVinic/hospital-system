@@ -11,20 +11,23 @@ import lombok.extern.slf4j.Slf4j;
 public class NotificationService {
 
     public void processarConsulta(NotificacaoConsultaDTO dto, String routingKey) {
+        log.info("[Notificação] Iniciando processamento da consulta. RoutingKey: {}", routingKey);
+
         switch (routingKey) {
-            case "consulta.created", "consulta.create" -> log.info("Evento recebido: consulta criada.");
-            case "consulta.updated", "consulta.update" -> log.info("Evento recebido: consulta atualizada.");
+            case "consulta.created", "consulta.create" -> log.info("[Notificação] Tipo de evento: criação de consulta.");
+            case "consulta.updated", "consulta.update" -> log.info("[Notificação] Tipo de evento: atualização de consulta.");
             default -> {
-                log.warn("Evento não reconhecido: {}", routingKey);
+                log.warn("[Notificação] Tipo de evento desconhecido: {}. Ignorando processamento.", routingKey);
                 return;
             }
         }
 
-        log.info("Dados da consulta recebida:");
-        log.info(" - Consulta ID: {}", dto.getIdConsulta());
-        log.info(" - Paciente ID: {}", dto.getPacienteId());
-        log.info(" - Email do paciente: {}", dto.getEmailPaciente());
-        log.info(" - Data e hora da consulta: {}", dto.getDataHora());
-        log.info("Simulando envio de notificação ao paciente.");
+        log.info("[Notificação] Detalhes da consulta:");
+        log.info(" • ID da Consulta: {}", dto.getIdConsulta());
+        log.info(" • ID do Paciente: {}", dto.getPacienteId());
+        log.info(" • Email do Paciente: {}", dto.getEmailPaciente());
+        log.info(" • Data e Hora: {}", dto.getDataHora());
+
+        log.info("[Notificação] Simulando envio de notificação ao paciente.");
     }
 }
