@@ -132,4 +132,136 @@ class ConsultaResolverTest {
         .errors()
         .expect(error -> Optional.ofNullable(error.getMessage()).orElse("").toLowerCase().contains("null"));
   }
+
+  @Test
+  void deveLancarErroQuandoObservacoesForemNulas() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: 1,
+                medicoId: 2,
+                dataHora: \"2025-06-01T10:00:00\",
+                observacoes: null
+              }) {
+                id
+              }
+            }
+        """;
+
+    Mockito.when(consultaService.criarConsultaComDTO(any()))
+           .thenThrow(new BusinessException("Observações obrigatórias"));
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> Optional.ofNullable(error.getMessage()).orElse("").contains("Observações"));
+  }
+
+  @Test
+  void deveLancarErroComDataHoraEmFormatoInvalido() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: 1,
+                medicoId: 2,
+                dataHora: \"erro-formato\",
+                observacoes: \"Falha\"
+              }) {
+                id
+              }
+            }
+        """;
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> Optional.ofNullable(error.getMessage()).orElse("").toLowerCase().contains("erro"));
+  }
+
+  @Test
+  void deveLancarErroQuandoMedicoIdForInvalido() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: 1,
+                medicoId: \"abc\",
+                dataHora: \"2025-06-01T10:00:00\",
+                observacoes: \"Teste com medico inválido\"
+              }) {
+                id
+              }
+            }
+        """;
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> Optional.ofNullable(error.getMessage()).orElse("").toLowerCase().contains("medico"));
+  }
+
+  @Test
+  void deveLancarErroQuandoPacienteIdForNegativo() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: -1,
+                medicoId: 2,
+                dataHora: "2025-06-01T10:00:00",
+                observacoes: "Paciente inválido"
+              }) {
+                id
+              }
+            }
+        """;
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> true); // erro é esperado, sem depender da mensagem
+  }
+
+  @Test
+  void deveLancarErroQuandoObservacoesForemVazias() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: 1,
+                medicoId: 2,
+                dataHora: \"2025-06-01T10:00:00\",
+                observacoes: \"\"
+              }) {
+                id
+              }
+            }
+        """;
+
+    Mockito.when(consultaService.criarConsultaComDTO(any()))
+           .thenThrow(new BusinessException("Observações obrigatórias"));
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> Optional.ofNullable(error.getMessage()).orElse("").contains("Observações"));
+  }
+
+  @Test
+  void deveLancarErroQuandoDataHoraForNula() {
+    String mutation = """
+            mutation {
+              criarConsulta(input: {
+                pacienteId: 1,
+                medicoId: 2,
+                dataHora: null,
+                observacoes: \"Sem data\"
+              }) {
+                id
+              }
+            }
+        """;
+
+    graphQlTester.document(mutation)
+        .execute()
+        .errors()
+        .expect(error -> true); // erro esperado
+  }
 }

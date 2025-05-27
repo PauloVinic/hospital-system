@@ -12,6 +12,8 @@ import com.techchallenge.agendamentoservice.domain.Consulta;
 import com.techchallenge.agendamentoservice.dto.ConsultaRequestDTO;
 import com.techchallenge.agendamentoservice.service.ConsultaService;
 
+import jakarta.validation.Valid;
+
 @Controller
 public class ConsultaResolver {
 
@@ -27,7 +29,7 @@ public class ConsultaResolver {
     }
 
     @MutationMapping
-    public Consulta criarConsulta(@Argument("input") ConsultaInput input) {
+    public Consulta criarConsulta(@Argument("input") @Valid ConsultaInput input) {
         ConsultaRequestDTO dto = new ConsultaRequestDTO(
                 input.pacienteId(),
                 input.medicoId(),
