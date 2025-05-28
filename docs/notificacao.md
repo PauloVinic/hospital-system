@@ -10,6 +10,7 @@ O `notificacao-service` é responsável por receber eventos de criação e atual
 - Simular o envio de lembretes aos pacientes.
 - Garantir comunicação assíncrona por meio de RabbitMQ.
 - Operar de forma desacoplada dos demais serviços.
+- Tratar falhas com suporte a Dead Letter Queue (DLQ).
 
 ## Tecnologias Utilizadas
 
@@ -23,12 +24,10 @@ O `notificacao-service` é responsável por receber eventos de criação e atual
 ## Estrutura do Projeto
 
 ```
-|-- controller (não aplicável)
+|-- config (configurações RabbitMQ)
+|-- dto (transferência de dados)
 |-- listener (consumo de eventos RabbitMQ)
 |-- service (lógica de notificação)
-|-- dto (transferência de dados)
-|-- config (configurações RabbitMQ)
-|-- exception (não aplicável)
 |-- test (testes unitários e de integração)
 ```
 
@@ -59,11 +58,18 @@ mvn spring-boot:run
 
 ## Comunicação com RabbitMQ
 
-- **Exchange:** `consulta.exchange` (Direct)
-- **Fila:** `consulta.queue`
+- **Exchange principal:** `consulta.exchange` (Direct)
+- **Fila principal:** `consulta.queue`
 - **Routing Keys:** `consulta.created`, `consulta.updated`
 
 Ao receber uma mensagem válida, o serviço processa o JSON e simula o envio da notificação por log.
+
+## Suporte a Dead Letter Queue (DLQ)
+
+Mensagens que falharem durante o processamento na fila principal são redirecionadas automaticamente para a fila morta (`consulta.dlq.queue`).  
+Essa fila está associada à exchange `dlx.exchange` e utiliza a routing key `consulta.dlq`.
+
+Esse mecanismo aumenta a resiliência do sistema, evitando perda de dados e permitindo análise posterior de mensagens problemáticas.
 
 ## Exemplo de Payload
 
@@ -90,6 +96,7 @@ Ao receber uma mensagem válida, o serviço processa o JSON e simula o envio da 
 
 ## Considerações
 
-- O serviço foi implementado com foco em confiabilidade e isolamento.
-- A simulação de envio permite testes sem dependência de APIs externas.
-- Alcançou 90%+ de cobertura de testes com validações de casos reais e inválidos.
+- O serviço foi implementado com foco em confiabilidade, isolamento e robustez.
+- O mecanismo de DLQ garante tolerância a falhas no processamento assíncrono.
+- A simulação de envio permite testes independentes de sistemas externos.
+- Alcançou 90%+ de cobertura de testes com validações de fluxos reais e inválidos.
