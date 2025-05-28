@@ -104,5 +104,19 @@
         }
       }
     }
+  ],
+  "variable": [
+    {
+      "key": "base_url_agendamento",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "base_url_notificacao",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "base_url_historico",
+      "value": "http://localhost:8082"
+    }
   ]
 }
