@@ -8,7 +8,7 @@ Sistema hospitalar distribuído, baseado em microsserviços, que permite agendam
 
 * **agendamento-service:** Gerencia criação e edição de consultas médicas.
 * **notificacao-service:** Processa eventos e envia notificações de consulta.
-* **historico-service:** (Opcional) Fornece histórico de consultas via GraphQL.
+* **historico-service:** Fornece histórico de consultas via GraphQL.
 
 ## Como executar
 

@@ -1,4 +1,4 @@
-# Documentação Técnica — notificacao-service
+# Notificacao Service
 
 ## Visão Geral
 
